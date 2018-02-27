@@ -68,7 +68,7 @@ run_test_rpm-x64:
 # scan the dependencies for security vulnerabilities with snyk
 run_security_scan_test:
   stage: source_test
-  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/devtools/snyk:latest
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/snyk:latest
   tags: ["runner:main", "size:large"]
   before_script:
     # this image isn't built in the datadog-agent-builders repo

@@ -30,29 +30,25 @@ build do
 
   # set GOPATH on the omnibus source dir for this software
   gopath = Pathname.new(project_dir) + '../../../..'
-  if windows?
-    env = {
-        'GOPATH' => gopath.to_path,
-        'PATH' => "#{gopath.to_path}/bin:#{ENV['PATH']}",
-        'WINDRES' => 'true',
-    }
-  else
-    env = {
-        'GOPATH' => gopath.to_path,
-        'PATH' => "#{gopath.to_path}/bin:#{ENV['PATH']}",
-    }
-  end
-
-  command "go get github.com/Masterminds/glide", :env => env
-  command "glide install", :env => env
+  env = {
+    'GOPATH' => windows? ? "#{windows_safe_path(gopath.to_path)}" : gopath.to_path,
+    'PATH' => "#{gopath.to_path}/bin:#{ENV['PATH']}",
+  }
 
   block do
     # defer compilation step in a block to allow getting the project's build version, which is populated
     # only once the software that the project takes its version from (i.e. `datadog-agent`) has finished building
     env['TRACE_AGENT_VERSION'] = project.build_version.gsub(/[^0-9\.]/, '') # used by gorake.rb in the trace-agent, only keep digits and dots
-    command "rake build", :env => env
+
+    # build trace-agent
     if windows?
-      copy trace_agent_binary, "#{install_dir}/bin/agent"
+      command "make windows", :env => env
+    end
+    command "make install", :env => env
+
+    # copy binary
+    if windows?
+      copy "#{gopath.to_path}/bin/#{trace_agent_binary}", "#{install_dir}/bin/agent"
     else
       copy trace_agent_binary, "#{install_dir}/embedded/bin"
     end
